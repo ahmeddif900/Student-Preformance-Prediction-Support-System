@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Risk Prediction Result</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 40px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .result-card {
+        padding: 40px;
+        border-radius: 15px;
+        margin: 20px 0;
+        color: white;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+      .feature-list {
+        margin-top: 30px;
+      }
+      .prediction {
+        font-size: 32px;
+        font-weight: bold;
+        margin: 10px 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      th,
+      td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+      th {
+        background-color: #2c3e50;
+        color: white;
+      }
+      tr:hover {
+        background-color: #f5f5f5;
+      }
+      .back-button {
+        padding: 12px 24px;
+        background: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        display: inline-block;
+        margin-top: 20px;
+      }
+      .back-button:hover {
+        background: #0056b3;
+      }
+      .confidence {
+        font-size: 16px;
+        opacity: 0.9;
+        margin: 10px 0;
+      }
+      .model-badge {
+        background: rgba(255, 255, 255, 0.3);
+        padding: 8px 20px;
+        border-radius: 25px;
+        font-size: 14px;
+        margin-top: 15px;
+        display: inline-block;
+        backdrop-filter: blur(10px);
+      }
+      .risk-high {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+      }
+      .risk-medium {
+        background: linear-gradient(135deg, #ffc107, #e0a800);
+        color: #000;
+      }
+      .risk-low {
+        background: linear-gradient(135deg, #28a745, #218838);
+      }
+      .risk-icon {
+        font-size: 48px;
+        margin-bottom: 15px;
+      }
+      .nlp-section {
+        margin-top: 30px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #007bff;
+      }
+      .sentiment-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: bold;
+        margin: 5px;
+      }
+      .sentiment-positive {
+        background: #d4edda;
+        color: #155724;
+      }
+      .sentiment-negative {
+        background: #f8d7da;
+        color: #721c24;
+      }
+      .sentiment-neutral {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .keyword-count {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        margin: 2px;
+      }
+      .positive-keyword {
+        background: #d4edda;
+        color: #155724;
+      }
+      .negative-keyword {
+        background: #f8d7da;
+        color: #721c24;
+      }
+      .tab-container {
+        margin-top: 20px;
+      }
+      .tab-buttons {
+        display: flex;
+        margin-bottom: 10px;
+      }
+      .tab-button {
+        padding: 10px 20px;
+        background: #e9ecef;
+        border: none;
+        cursor: pointer;
+        margin-right: 5px;
+        border-radius: 5px 5px 0 0;
+      }
+      .tab-button.active {
+        background: #007bff;
+        color: white;
+      }
+      .tab-content {
+        display: none;
+        padding: 20px;
+        background: white;
+        border-radius: 0 5px 5px 5px;
+        border: 1px solid #dee2e6;
+      }
+      .tab-content.active {
+        display: block;
+      }
+      .score-bar {
+        background: #e9ecef;
+        border-radius: 10px;
+        height: 20px;
+        margin: 5px 0;
+        overflow: hidden;
+      }
+      .score-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #007bff, #0056b3);
+        border-radius: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>📊 Risk Prediction Results</h1>
+
+      <div
+        class="result-card {% if result.is_text_only and result.nlp_analysis %}{% if result.nlp_analysis.education_risk == 'High' %}risk-high{% elif result.nlp_analysis.education_risk == 'Medium' %}risk-medium{% else %}risk-low{% endif %}{% else %}{% if result.predicted_class == 2 %}risk-high{% elif result.predicted_class == 1 %}risk-medium{% else %}risk-low{% endif %}{% endif %}"
+      >
+        <div class="risk-icon">
+          {% if result.is_text_only and result.nlp_analysis %} {% if
+          result.nlp_analysis.education_risk == 'High' %}⚠️ {% elif
+          result.nlp_analysis.education_risk == 'Medium' %}🔶 {% else %}✅{%
+          endif %} {% else %} {{ result.risk_category.icon }} {% endif %}
+        </div>
+
+        <h2>Predicted Risk Level</h2>
+
+        <div class="prediction">
+          {% if result.is_text_only and result.nlp_analysis %} {% if
+          result.nlp_analysis.education_risk == 'High' %}High Risk (Fail <10) {%
+          elif result.nlp_analysis.education_risk == 'Medium' %}Medium Risk
+          (Pass 10–13) {% else %}Low Risk (Pass 14+){% endif %} {% else %} {{
+          result.risk_category.name }} {% endif %}
+        </div>
+
+        {% if result.is_text_only and result.nlp_model_prediction and
+        result.nlp_model_prediction.confidence %}
+        <div class="confidence">
+          Confidence:
+          <strong
+            >{{ "%.1f"|format(result.nlp_model_prediction.confidence * 100)
+            }}%</strong
+          >
+        </div>
+        {% elif result.confidence %}
+        <div class="confidence">
+          Confidence:
+          <strong>{{ "%.1f"|format(result.confidence * 100) }}%</strong>
+        </div>
+        {% endif %}
+
+        <div class="model-badge">
+          {% if result.is_text_only %} Model: Text Analysis NLP {% else %}
+          Model: {{ result.model_used }} {% endif %}
+        </div>
+      </div>
+
+      <!-- Tab Container for Results -->
+      <div class="tab-container">
+        <div class="tab-buttons">
+          <button
+            class="tab-button active"
+            onclick="showResultTab('features-tab')"
+          >
+            Input Features
+          </button>
+          {% if result.nlp_analysis or result.nlp_model_prediction %}
+          <button class="tab-button" onclick="showResultTab('nlp-tab')">
+            Text Analysis
+          </button>
+          {% endif %}
+        </div>
+
+        <!-- Features Tab -->
+        <div id="features-tab" class="tab-content active">
+          <div class="feature-list">
+            <h3>📋 Input Features Used:</h3>
+            <table>
+              <tr>
+                <th>Feature</th>
+                <th>Value</th>
+                <th>Description</th>
+              </tr>
+              {% for feature, value in result.input_features.items() %} {% if
+              feature != 'model' and feature != 'nlp_text' %}
+              <tr>
+                <td><strong>{{ feature }}</strong></td>
+                <td>{{ value }}</td>
+                <td style="font-size: 12px; color: #666">
+                  {{ feature_details[feature].description if feature in
+                  feature_details else '' }}
+                </td>
+              </tr>
+              {% endif %} {% endfor %}
+            </table>
+          </div>
+        </div>
+
+        <!-- NLP Analysis Tab -->
+        {% if result.nlp_analysis or result.nlp_model_prediction %}
+        <div id="nlp-tab" class="tab-content">
+          <h3>📝 Text Analysis Results</h3>
+
+          {% if result.nlp_analysis %}
+          <div style="margin-bottom: 30px">
+            <h4>Sentiment Analysis:</h4>
+            <div
+              class="sentiment-badge {% if result.nlp_analysis.sentiment == 'Positive' %}sentiment-positive{% elif result.nlp_analysis.sentiment == 'Negative' %}sentiment-negative{% else %}sentiment-neutral{% endif %}"
+            >
+              {{ result.nlp_analysis.sentiment_icon }} {{
+              result.nlp_analysis.sentiment }} Sentiment
+            </div>
+            <p>
+              <strong>Original Text:</strong> "{{ result.nlp_analysis.text }}"
+            </p>
+
+            <div style="margin: 15px 0">
+              <span class="keyword-count positive-keyword"
+                >👍 Positive Keywords: {{ result.nlp_analysis.positive_keywords
+                }}</span
+              >
+              <span class="keyword-count negative-keyword"
+                >👎 Negative Keywords: {{ result.nlp_analysis.negative_keywords
+                }}</span
+              >
+            </div>
+
+            <!-- Sentiment Scores -->
+            <div
+              style="
+                background: #f8f9fa;
+                padding: 15px;
+                border-radius: 5px;
+                margin: 15px 0;
+              "
+            >
+              <h5>Sentiment Scores:</h5>
+              <div style="margin: 10px 0">
+                <strong>Positive:</strong> {{
+                "%.2f"|format(result.nlp_analysis.scores.vader_positive * 100)
+                }}%
+                <div class="score-bar">
+                  <div
+                    class="score-fill"
+                    style="width: {{ result.nlp_analysis.scores.vader_positive * 100 }}%"
+                  ></div>
+                </div>
+              </div>
+              <div style="margin: 10px 0">
+                <strong>Negative:</strong> {{
+                "%.2f"|format(result.nlp_analysis.scores.vader_negative * 100)
+                }}%
+                <div class="score-bar">
+                  <div
+                    class="score-fill"
+                    style="width: {{ result.nlp_analysis.scores.vader_negative * 100 }}%"
+                  ></div>
+                </div>
+              </div>
+              <div style="margin: 10px 0">
+                <strong>Neutral:</strong> {{
+                "%.2f"|format(result.nlp_analysis.scores.vader_neutral * 100)
+                }}%
+                <div class="score-bar">
+                  <div
+                    class="score-fill"
+                    style="width: {{ result.nlp_analysis.scores.vader_neutral * 100 }}%"
+                  ></div>
+                </div>
+              </div>
+              <div style="margin: 10px 0">
+                <strong>Compound:</strong> {{
+                "%.2f"|format(result.nlp_analysis.compound_score) }}
+                <div class="score-bar">
+                  <div
+                    class="score-fill"
+                    style="width: {{ (result.nlp_analysis.compound_score + 1) * 50 }}%"
+                  ></div>
+                </div>
+              </div>
+            </div>
+
+            <div style="background: #e9ecef; padding: 15px; border-radius: 5px">
+              <strong>Education Risk Assessment:</strong>
+              <span
+                class="sentiment-badge {% if result.nlp_analysis.education_risk == 'High' %}sentiment-negative{% elif result.nlp_analysis.education_risk == 'Medium' %}sentiment-neutral{% else %}sentiment-positive{% endif %}"
+              >
+                {{ result.nlp_analysis.risk_icon }} {{
+                result.nlp_analysis.education_risk }} Risk
+              </span>
+            </div>
+          </div>
+          {% endif %} {% if result.nlp_model_prediction %}
+          <div>
+            <h4>NLP Model Prediction:</h4>
+            <div
+              class="result-card {% if result.nlp_model_prediction.predicted_class == 2 %}risk-high{% elif result.nlp_model_prediction.predicted_class == 1 %}risk-medium{% else %}risk-low{% endif %}"
+              style="padding: 20px"
+            >
+              <strong>Predicted Risk:</strong>
+              {% if result.nlp_model_prediction.predicted_class == 2 %}High Risk
+              (Fail <10){% elif result.nlp_model_prediction.predicted_class == 1
+              %}Medium Risk (Pass 10–13){% else %}Low Risk (Pass 14+){% endif %}
+              {% if result.nlp_model_prediction.confidence %}
+              <div class="confidence">
+                Confidence: {{
+                "%.1f"|format(result.nlp_model_prediction.confidence * 100) }}%
+              </div>
+              {% endif %} {% if result.nlp_model_prediction.probabilities %}
+              <div style="margin-top: 15px; text-align: left">
+                <strong>Probability Distribution:</strong>
+                <div style="margin: 10px 0">
+                  <div>
+                    High Risk: {{
+                    "%.1f"|format(result.nlp_model_prediction.probabilities[2] *
+                    100) }}%
+                  </div>
+                  <div class="score-bar">
+                    <div
+                      class="score-fill"
+                      style="width: {{ result.nlp_model_prediction.probabilities[2] * 100 }}%; background: #dc3545;"
+                    ></div>
+                  </div>
+                </div>
+                <div style="margin: 10px 0">
+                  <div>
+                    Medium Risk: {{
+                    "%.1f"|format(result.nlp_model_prediction.probabilities[1] *
+                    100) }}%
+                  </div>
+                  <div class="score-bar">
+                    <div
+                      class="score-fill"
+                      style="width: {{ result.nlp_model_prediction.probabilities[1] * 100 }}%; background: #ffc107;"
+                    ></div>
+                  </div>
+                </div>
+                <div style="margin: 10px 0">
+                  <div>
+                    Low Risk: {{
+                    "%.1f"|format(result.nlp_model_prediction.probabilities[0] *
+                    100) }}%
+                  </div>
+                  <div class="score-bar">
+                    <div
+                      class="score-fill"
+                      style="width: {{ result.nlp_model_prediction.probabilities[0] * 100 }}%; background: #28a745;"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        
+      </div>
+
+      <div style="text-align: center; margin-top: 30px">
+        <a href="/" class="back-button">↩️ Make Another Prediction</a>
+      </div>
+    </div>
+
+    <!-- Add this script at the bottom of result.html -->
+    <script>
+      // Auto-show NLP tab if it's a text-only analysis or if there's NLP content
+      document.addEventListener('DOMContentLoaded', function() {
+        {% if result.analyze_text_only or (result.nlp_analysis or result.nlp_model_prediction) %}
+        // Wait a bit for the page to load, then switch to NLP tab
+        setTimeout(function() {
+          showResultTab('nlp-tab');
+          // Also update the tab button to active state
+          document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.textContent.includes('Text Analysis')) {
+              btn.classList.add('active');
+            }
+          });
+        }, 100);
+        {% endif %}
+      });
+
+      function showResultTab(tabId) {
+        // Hide all tabs
+        document.querySelectorAll('.tab-content').forEach(tab => {
+          tab.classList.remove('active');
+        });
+
+        // Show selected tab
+        const tab = document.getElementById(tabId);
+        if (tab) {
+          tab.classList.add('active');
+        }
+
+        // Update tab buttons
+        document.querySelectorAll('.tab-button').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        // Don't use event.currentTarget here since we're calling programmatically
+      }
+    </script>
+  </body>
+</html>

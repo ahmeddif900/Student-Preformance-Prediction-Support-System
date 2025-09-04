@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Student Risk Prediction</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 40px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .form-group {
+        margin: 20px 0;
+        padding: 15px;
+        border: 1px solid #e0e0e0;
+        border-radius: 5px;
+        background: #fafafa;
+      }
+      label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+        color: #333;
+      }
+      .description {
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 8px;
+        font-style: italic;
+      }
+      input,
+      select,
+      textarea {
+        padding: 10px;
+        width: 100%;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        font-family: inherit;
+      }
+      textarea {
+        min-height: 100px;
+        resize: vertical;
+      }
+      button {
+        padding: 15px 30px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-top: 20px;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      h1,
+      h2,
+      h3 {
+        color: #2c3e50;
+      }
+      h1 {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .required {
+        color: red;
+      }
+      .help-text {
+        font-size: 11px;
+        color: #888;
+        margin-top: 4px;
+      }
+      .model-selection {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+      .model-info {
+        font-size: 12px;
+        color: #e0e0e0;
+        margin-top: 5px;
+      }
+      .risk-categories {
+        display: flex;
+        justify-content: space-around;
+        margin: 20px 0;
+        flex-wrap: wrap;
+      }
+      .risk-category {
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+        margin: 5px;
+        flex: 1;
+        min-width: 150px;
+      }
+      .risk-high {
+        background-color: #dc3545;
+        color: white;
+      }
+      .risk-medium {
+        background-color: #ffc107;
+        color: #000;
+      }
+      .risk-low {
+        background-color: #28a745;
+        color: white;
+      }
+      .nlp-section {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+      }
+      .tab-container {
+        margin-top: 20px;
+      }
+      .tab-buttons {
+        display: flex;
+        margin-bottom: 10px;
+      }
+      .tab-button {
+        padding: 10px 20px;
+        background: #e9ecef;
+        border: none;
+        cursor: pointer;
+        margin-right: 5px;
+        border-radius: 5px 5px 0 0;
+      }
+      .tab-button.active {
+        background: #007bff;
+        color: white;
+      }
+      .tab-content {
+        display: none;
+        padding: 20px;
+        background: white;
+        border-radius: 0 5px 5px 5px;
+        border: 1px solid #dee2e6;
+      }
+      .tab-content.active {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🎓 Student Risk Prediction</h1>
+      <p>Predict the risk level for a student's final performance:</p>
+
+      <!-- Risk Categories Overview -->
+      <div class="risk-categories">
+        <div class="risk-category risk-high">
+          <div style="font-size: 24px">⚠️</div>
+          <strong>High Risk</strong>
+          <div>Fail (<10)</div>
+        </div>
+        <div class="risk-category risk-medium">
+          <div style="font-size: 24px">🔶</div>
+          <strong>Medium Risk</strong>
+          <div>Pass (10–13)</div>
+        </div>
+        <div class="risk-category risk-low">
+          <div style="font-size: 24px">✅</div>
+          <strong>Low Risk</strong>
+          <div>Pass (14+)</div>
+        </div>
+      </div>
+
+      <!-- Tab Container -->
+      <div class="tab-container">
+        <div class="tab-buttons">
+          <button class="tab-button active" onclick="showTab('structured-tab')">
+            Structured Data
+          </button>
+          <button class="tab-button" onclick="showTab('nlp-tab')">
+            Text Analysis
+          </button>
+          <button class="tab-button" onclick="showTab('combined-tab')">
+            Combined Analysis
+          </button>
+        </div>
+
+        <!-- Structured Data Tab -->
+        <div id="structured-tab" class="tab-content active">
+          <form action="/predict" method="post">
+            <!-- Model Selection -->
+            <div class="model-selection">
+              <label for="model">Select Prediction Model:</label>
+              <select name="model" id="model" required>
+                <option value="">Choose a model...</option>
+                {% for model in models %}
+                <option value="{{ model }}">{{ model }}</option>
+                {% endfor %}
+              </select>
+              <div class="model-info">
+                💡 Different models may give different risk assessments. Random
+                Forest is recommended for most cases.
+              </div>
+            </div>
+
+            <!-- Input Fields -->
+            {% for feature in features %}
+            <div class="form-group">
+              <label for="{{ feature }}"
+                >{{ feature }}{% if feature in ['G1', 'G2', 'absences', 'age']
+                %}*{% endif %}</label
+              >
+
+              <div class="description">
+                {{ feature_details[feature].description }} {% if
+                feature_details[feature].type == 'binary' %} ({{
+                feature_details[feature].options|join(' or ') }}) {% endif %}
+              </div>
+
+              {% if feature_details[feature].type == 'binary' %}
+              <select name="{{ feature }}" id="{{ feature }}" required>
+                <option value="">Select {{ feature }}</option>
+                {% for option in feature_details[feature].options %}
+                <option value="{{ option }}">{{ option }}</option>
+                {% endfor %}
+              </select>
+
+              {% elif feature == 'school' %}
+              <select name="school" id="school" required>
+                <option value="">Select school</option>
+                <option value="GP">GP - Gabriel Pereira</option>
+                <option value="MS">MS - Mousinho da Silveira</option>
+              </select>
+
+              {% elif feature == 'AvgGrade' %}
+              <input
+                type="number"
+                name="{{ feature }}"
+                id="{{ feature }}"
+                step="0.1"
+                min="0"
+                max="20"
+                placeholder="Auto-calculated from G1 and G2"
+                readonly
+              />
+              <div class="help-text">Calculated as (G1 + G2) / 2</div>
+
+              {% elif feature == 'attendance_ratio' %}
+              <input
+                type="number"
+                name="{{ feature }}"
+                id="{{ feature }}"
+                step="0.01"
+                min="0"
+                max="1"
+                placeholder="Enter {{ feature }} (0-1)"
+                required
+              />
+              <div class="help-text">
+                1 - (absences / total school days). 1 = perfect attendance, 0 =
+                no attendance
+              </div>
+
+              {% elif feature == 'goout' %}
+              <select name="goout" id="goout" required>
+                <option value="">Select frequency</option>
+                <option value="1">1 - Very Low</option>
+                <option value="2">2 - Low</option>
+                <option value="3">3 - Medium</option>
+                <option value="4">4 - High</option>
+                <option value="5">5 - Very High</option>
+              </select>
+              <div class="help-text">Frequency of going out with friends</div>
+
+              {% else %}
+              <input
+                type="number"
+                name="{{ feature }}"
+                id="{{ feature }}"
+                step="{% if feature in ['G1', 'G2', 'AvgGrade'] %}0.1{% else %}1{% endif %}"
+                min="{{ feature_details[feature].min }}"
+                max="{{ feature_details[feature].max }}"
+                placeholder="{{ feature_details[feature].placeholder }}"
+                required
+              />
+
+              {% if feature == 'absences' %}
+              <div class="help-text">
+                Total number of school absences (0-93)
+              </div>
+              {% elif feature == 'age' %}
+              <div class="help-text">Student's current age (15-22 years)</div>
+              {% elif feature in ['G1', 'G2'] %}
+              <div class="help-text">Grade from 0 to 20</div>
+              {% endif %} {% endif %}
+            </div>
+            {% endfor %}
+
+            <div style="text-align: center">
+              <button type="submit">📊 Predict Risk Level</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- NLP Tab -->
+        <div id="nlp-tab" class="tab-content">
+          <div class="nlp-section">
+            <h3>📝 Text Analysis</h3>
+            <p>
+              Analyze student comments, descriptions, or feedback for sentiment
+              and risk assessment.
+            </p>
+
+            <form action="/predict" method="post">
+              <!-- ADD THIS HIDDEN FIELD -->
+              <input type="hidden" name="analyze_text_only" value="true" />
+              <input type="hidden" name="model" value="Random Forest" />
+
+              <div class="form-group">
+                <label for="nlp_text">Student Description or Comments:</label>
+                <textarea
+                  name="nlp_text"
+                  id="nlp_text"
+                  placeholder="Enter student description, comments, or any textual information about the student's performance, behavior, or circumstances..."
+                  rows="6"
+                ></textarea>
+                <div class="help-text">
+                  Example: "Student shows consistent effort but struggles with
+                  mathematics concepts. Attendance has been good but homework
+                  completion is inconsistent."
+                </div>
+              </div>
+
+              <div style="text-align: center">
+                <button type="submit">🔍 Analyze Text</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Combined Tab -->
+        <div id="combined-tab" class="tab-content">
+          <h3>📊 Combined Analysis</h3>
+          <p>
+            Use both structured data and text analysis for comprehensive risk
+            assessment.
+          </p>
+
+          <form action="/predict" method="post">
+            <!-- Model Selection -->
+            <div class="model-selection">
+              <label for="model-combined">Select Prediction Model:</label>
+              <select name="model" id="model-combined" required>
+                <option value="">Choose a model...</option>
+                {% for model in models %}
+                <option value="{{ model }}">{{ model }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- Structured Input Fields (simplified) -->
+            <div class="form-group">
+              <label for="G1">G1 (First Period Grade)*</label>
+              <input
+                type="number"
+                name="G1"
+                id="G1"
+                step="0.1"
+                min="0"
+                max="20"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="G2">G2 (Second Period Grade)*</label>
+              <input
+                type="number"
+                name="G2"
+                id="G2"
+                step="0.1"
+                min="0"
+                max="20"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="absences">Absences*</label>
+              <input
+                type="number"
+                name="absences"
+                id="absences"
+                min="0"
+                max="93"
+                required
+              />
+            </div>
+
+            <!-- NLP Text -->
+            <div class="form-group">
+              <label for="nlp_text_combined">Additional Comments:</label>
+              <textarea
+                name="nlp_text"
+                id="nlp_text_combined"
+                placeholder="Optional: Add any additional comments about the student..."
+                rows="4"
+              ></textarea>
+            </div>
+
+            <div style="text-align: center">
+              <button type="submit">📈 Comprehensive Analysis</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <script>
+        // Auto-calculate AvgGrade when G1 or G2 changes
+        document.addEventListener("DOMContentLoaded", function () {
+          const g1Input = document.getElementById("G1");
+          const g2Input = document.getElementById("G2");
+          const avgGradeInput = document.getElementById("AvgGrade");
+
+          function calculateAvgGrade() {
+            const g1 = parseFloat(g1Input.value) || 0;
+            const g2 = parseFloat(g2Input.value) || 0;
+            const avg = (g1 + g2) / 2;
+            avgGradeInput.value = avg.toFixed(1);
+          }
+
+          if (g1Input && g2Input && avgGradeInput) {
+            g1Input.addEventListener("input", calculateAvgGrade);
+            g2Input.addEventListener("input", calculateAvgGrade);
+          }
+
+          // Auto-calculate attendance ratio
+          const absencesInput = document.getElementById("absences");
+          const attendanceInput = document.getElementById("attendance_ratio");
+
+          function calculateAttendanceRatio() {
+            const absences = parseFloat(absencesInput.value) || 0;
+            const totalDays = 93; // Maximum possible absences
+            const ratio = 1 - absences / totalDays;
+            attendanceInput.value = Math.max(0, Math.min(1, ratio)).toFixed(2);
+          }
+
+          if (absencesInput && attendanceInput) {
+            absencesInput.addEventListener("input", calculateAttendanceRatio);
+          }
+        });
+
+        // Tab functionality
+        function showTab(tabId) {
+          // Hide all tabs
+          document.querySelectorAll(".tab-content").forEach((tab) => {
+            tab.classList.remove("active");
+          });
+
+          // Show selected tab
+          document.getElementById(tabId).classList.add("active");
+
+          // Update tab buttons
+          document.querySelectorAll(".tab-button").forEach((btn) => {
+            btn.classList.remove("active");
+          });
+          event.currentTarget.classList.add("active");
+        }
+      </script>
+    </div>
+  </body>
+</html>

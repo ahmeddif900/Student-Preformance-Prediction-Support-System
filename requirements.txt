@@ -1,0 +1,24 @@
+# Core
+numpy
+pandas
+scikit-learn
+mlxtend
+
+# Deep Learning
+tensorflow
+keras
+
+# NLP
+nltk
+textblob
+
+# Web Framework
+flask
+
+
+# Visualization
+matplotlib
+seaborn
+
+# Model Saving
+joblib
